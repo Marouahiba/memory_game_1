@@ -67,9 +67,7 @@
 <audio id="sonWin" src="/images/sounds/win.mp3" preload="auto"></audio>
 
 <div class="info">
-    <label>👤 Ton nom :
-        <input type="text" id="nomJoueur" placeholder="Entre ton nom" style="padding:5px; border-radius:10px;">
-    </label>
+    <input type="hidden" id="nomJoueur">
     <br>
     Niveau <span id="niveauSpan" th:text="${niveau}">1</span>
     | Score: <span id="score">0</span>
@@ -255,12 +253,6 @@
             return;
         }
 
-        let nomJoueur = document.getElementById('nomJoueur').value;
-        if (!nomJoueur) {
-            alert('Entre ton nom avant de sauvegarder !');
-            return;
-        }
-
         let cartesEtat = [];
         document.querySelectorAll('.carte').forEach(c => {
             cartesEtat.push({
@@ -271,7 +263,6 @@
 
         let data = {
             id: currentPartieId,
-            nomJoueur: nomJoueur,
             niveau: niveau,
             score: score,
             coups: coups,

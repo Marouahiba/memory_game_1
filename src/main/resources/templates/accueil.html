@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Memory Challenge - Accueil</title>
     <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <h1>🧠 Memory Challenge</h1>
-<div id="connexionDiv">
-    <h2>👤 Connexion</h2>
-    <label>Ton pseudo :
-        <input type="text" id="pseudo" placeholder="Entre ton pseudo" style="padding:10px; border-radius:10px;">
-    </label>
-    <button onclick="seConnecter()">✅ Se connecter</button>
+
+<div id="connexionDiv" class="connexion">
+    <h2>👤 Connexion / Inscription</h2>
+
+    <div class="form-group">
+        <input type="text" id="pseudo" placeholder="Pseudo" style="padding:10px; border-radius:10px; width:200px;">
+        <br>
+        <input type="password" id="motDePasse" placeholder="Mot de passe" style="padding:10px; border-radius:10px; width:200px; margin-top:10px;">
+    </div>
+
+    <br>
+    <button onclick="seConnecter()">🔐 Se connecter</button>
+    <button onclick="sInscrire()">📝 S'inscrire</button>
 </div>
 
 <div id="menuJeu" style="display:none;">
@@ -21,7 +28,6 @@
     <p>Prêt à tester ta mémoire ? Bonne chance !</p>
 
     <h3>Choisis ton niveau :</h3>
-    <br><br/>
     <button onclick="demarrerPartie(1)">⭐ Facile</button><br>
     <button onclick="demarrerPartie(2)">⭐⭐ Moyen</button><br>
     <button onclick="demarrerPartie(3)">⭐⭐⭐ Difficile</button>
@@ -35,15 +41,17 @@
 <script>
     function seConnecter() {
         let pseudo = document.getElementById('pseudo').value.trim();
-        if (!pseudo) {
-            alert('Entre ton pseudo !');
+        let motDePasse = document.getElementById('motDePasse').value;
+
+        if (!pseudo || !motDePasse) {
+            alert('Remplis tous les champs');
             return;
         }
 
         fetch('/connexion', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pseudo: pseudo })
+            body: JSON.stringify({ pseudo: pseudo, motDePasse: motDePasse })
         })
             .then(response => response.json())
             .then(data => {
@@ -51,6 +59,38 @@
                     document.getElementById('pseudoAffichage').innerText = pseudo;
                     document.getElementById('connexionDiv').style.display = 'none';
                     document.getElementById('menuJeu').style.display = 'block';
+                } else {
+                    alert('Erreur: ' + (data.message || 'Identifiants incorrects'));
+                }
+            });
+    }
+
+    function sInscrire() {
+        let pseudo = document.getElementById('pseudo').value.trim();
+        let motDePasse = document.getElementById('motDePasse').value;
+
+        if (!pseudo || !motDePasse) {
+            alert('Remplis tous les champs');
+            return;
+        }
+
+        if (motDePasse.length < 4) {
+            alert('Le mot de passe doit contenir au moins 4 caractères');
+            return;
+        }
+
+        fetch('/inscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pseudo: pseudo, motDePasse: motDePasse })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Inscription réussie ! Connecte-toi maintenant.');
+                    document.getElementById('motDePasse').value = '';
+                } else {
+                    alert('Erreur: ' + data.message);
                 }
             });
     }
@@ -78,24 +118,6 @@
                 document.getElementById('menuJeu').style.display = 'block';
             }
         });
-    // Effet de particules flottantes
-    function createParticle() {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.left = Math.random() * 100 + '%';
-        particle.style.animationDuration = Math.random() * 3 + 2 + 's';
-        particle.style.width = Math.random() * 6 + 2 + 'px';
-        particle.style.height = particle.style.width;
-        document.body.appendChild(particle);
-
-        setTimeout(() => {
-            particle.remove();
-        }, 5000);
-    }
-
-    // Créer des particules toutes les 0.5 secondes
-    setInterval(createParticle, 500);
 </script>
-
 </body>
 </html>

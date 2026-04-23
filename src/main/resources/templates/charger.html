@@ -27,7 +27,7 @@
     </thead>
     <tbody>
     <tr th:each="p : ${parties}">
-        <td th:text="${p.nomJoueur}">Joueur</td>
+        <td th:text="${p.joueur.pseudo}">Joueur</td>
         <td>
             <span th:if="${p.niveau == 1}">⭐ Facile</span>
             <span th:if="${p.niveau == 2}">⭐⭐ Moyen</span>

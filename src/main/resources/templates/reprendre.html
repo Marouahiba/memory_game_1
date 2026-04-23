@@ -62,9 +62,7 @@
 <audio id="sonMatch" src="/images/sounds/match.mp3" preload="auto"></audio>
 <audio id="sonWin" src="/images/sounds/win.mp3" preload="auto"></audio>
 <div class="info">
-    <label>👤 Ton nom :
-        <input type="text" id="nomJoueur" placeholder="Entre ton nom" style="padding:5px; border-radius:10px;">
-    </label>
+    <input type="hidden" id="nomJoueur">
     <button onclick="sauvegarderReprise()">💾 Sauvegarder</button>
     <button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
 </div>
@@ -117,7 +115,7 @@
     document.getElementById('score').innerText = score;
     document.getElementById('coups').innerText = coups;
     document.getElementById('timer').innerText = temps;
-    document.getElementById('nomJoueur').value = '';
+    
 
     // Fonctions
     function updateRestantes() {
@@ -282,12 +280,6 @@
             return;
         }
 
-        let nomJoueur = document.getElementById('nomJoueur').value;
-        if (!nomJoueur) {
-            alert('Entre ton nom avant de sauvegarder !');
-            return;
-        }
-
         let cartesEtat = [];
         document.querySelectorAll('.carte').forEach(c => {
             cartesEtat.push({
@@ -298,7 +290,6 @@
 
         let data = {
             id: partieId,
-            nomJoueur: nomJoueur,
             niveau: niveau,
             score: score,
             coups: coups,
