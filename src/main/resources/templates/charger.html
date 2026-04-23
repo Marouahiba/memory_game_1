@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Charger une partie</title>
+    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <style>
+        table { margin: auto; border-collapse: collapse; width: 80%; }
+        th, td { padding: 10px; border: 1px solid white; text-align: center; }
+        button { margin: 5px; }
+    </style>
+</head>
+<body>
+<h1>📂 Charger une partie sauvegardée</h1>
+<h2>Parties de <span th:text="${joueur}"></span></h2>
+<table>
+    <thead>
+    <tr>
+        <th>Joueur</th>
+        <th>Niveau</th>
+        <th>Score</th>
+        <th>Coups</th>
+        <th>Date</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${parties}">
+        <td th:text="${p.nomJoueur}">Joueur</td>
+        <td>
+            <span th:if="${p.niveau == 1}">⭐ Facile</span>
+            <span th:if="${p.niveau == 2}">⭐⭐ Moyen</span>
+            <span th:if="${p.niveau == 3}">⭐⭐⭐ Difficile</span>
+        </td>
+        <td th:text="${p.score}">0</td>
+        <td th:text="${p.coups}">0</td>
+        <td th:text="${#temporals.format(p.dateSauvegarde, 'dd/MM/yyyy HH:mm:ss')}">date</td>
+        <td>
+            <button th:onclick="'chargerPartie(' + ${p.id} + ')'">📀 Charger</button>
+            <button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<br>
+<button onclick="window.location.href='/'">🏠 Retour accueil</button>
+
+<script>
+    function chargerPartie(id) {
+        window.location.href = '/reprendre-partie?id=' + id;
+    }
+    // Effet de particules flottantes
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDuration = Math.random() * 3 + 2 + 's';
+        particle.style.width = Math.random() * 6 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+            particle.remove();
+        }, 5000);
+    }
+
+    // Créer des particules toutes les 0.5 secondes
+    setInterval(createParticle, 500);
+</script>
+
+</body>
+</html>

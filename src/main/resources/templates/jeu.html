@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Memory Challenge - Jeu</title>
+    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <style>
+        .grille {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            gap: 15px;
+            justify-content: center;
+            margin: 30px auto;
+            max-width: 600px;
+        }
+        .carte {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .carte:hover {
+            transform: scale(1.05);
+        }
+        .carte.retournee {
+            background-color: #ffd700;
+        }
+        .info {
+            font-size: 20px;
+            margin: 20px;
+        }
+        button {
+            background-color: white;
+            color: #764ba2;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .carte img {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
+</head>
+<body>
+<h1>🧠 Memory Challenge</h1>
+<audio id="sonFlip" src="/images/sounds/flip.mp3" preload="auto"></audio>
+<audio id="sonMatch" src="/images/sounds/match.mp3" preload="auto"></audio>
+<audio id="sonWin" src="/images/sounds/win.mp3" preload="auto"></audio>
+
+<div class="info">
+    <label>👤 Ton nom :
+        <input type="text" id="nomJoueur" placeholder="Entre ton nom" style="padding:5px; border-radius:10px;">
+    </label>
+    <br>
+    Niveau <span id="niveauSpan" th:text="${niveau}">1</span>
+    | Score: <span id="score">0</span>
+    | Coups: <span id="coups">0</span>
+    | ⏱️ Temps: <span id="timer">0</span> secondes
+    | 🃏 Cartes restantes: <span id="restantes">0</span>
+</div>
+
+<div class="grille" id="grille"></div>
+
+<button onclick="sauvegarderPartie()">💾 Sauvegarder la partie</button>
+<button onclick="window.location.href='/'">🏠 Retour accueil</button>
+<button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
+
+<script th:inline="javascript">
+
+    /*<![CDATA[*/
+    const niveau = [[${niveau}]];
+    let joueur = '';
+    fetch('/verifier-session')
+        .then(response => response.json())
+        .then(data => {
+            if (data.connecte) {
+                joueur = data.joueur;
+                document.getElementById('nomJoueur').value = joueur;
+            }
+        });
+    let cartesData = [[${cartes}]];
+    /*]]>*/
+
+    console.log("Niveau:", niveau);
+    console.log("Joueur:", joueur);
+    console.log("Cartes data:", cartesData);
+
+    let currentPartieId = null;
+    let score = 0;
+    let coups = 0;
+    let cartesSelectionnees = [];
+    let blocage = false;
+    let partieTerminee = false;
+
+    // Pré-remplir le nom du joueur
+    document.getElementById('nomJoueur').value = joueur;
+    document.getElementById('score').innerText = score;
+    document.getElementById('coups').innerText = coups;
+
+    // Déterminer le nombre de colonnes selon le niveau
+    let colonnes = 4;
+    if (niveau === 2) colonnes = 4;
+    if (niveau === 3) colonnes = 6;
+
+    const grilleDiv = document.getElementById('grille');
+    grilleDiv.style.gridTemplateColumns = `repeat(${colonnes}, 100px)`;
+
+    function afficherGrille() {
+        grilleDiv.innerHTML = '';
+
+        cartesData.forEach((carte, index) => {
+            const div = document.createElement('div');
+            div.className = 'carte';
+            if (carte.retournee === true) {
+                const img = document.createElement('img');
+                img.src = carte.valeur;
+                div.appendChild(img);
+                div.classList.add('retournee');
+            } else {
+                div.innerHTML = '❓';
+            }
+            div.setAttribute('data-index', index);
+            div.setAttribute('data-valeur', carte.valeur);
+            div.setAttribute('data-retournee', carte.retournee);
+            div.onclick = () => returnCarte(div);
+            grilleDiv.appendChild(div);
+        });
+    }
+
+    function returnCarte(element) {
+        jouerSon('sonFlip');
+        if (blocage) return;
+        if (partieTerminee) return;
+        if (element.classList.contains('retournee')) return;
+        if (cartesSelectionnees.length >= 2) return;
+
+        let index = parseInt(element.getAttribute('data-index'));
+        if (cartesData[index].retournee === true) return;
+
+        let valeur = cartesData[index].valeur;
+        console.log("Carte cliquée - Index:", index, "Valeur:", valeur);
+
+        // Afficher l'image
+        element.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = valeur;
+        element.appendChild(img);
+        element.classList.add('retournee');
+        cartesData[index].retournee = true;
+
+        cartesSelectionnees.push({element, index});
+
+        if (cartesSelectionnees.length === 2) {
+            coups++;
+            document.getElementById('coups').innerText = coups;
+            verifierPaire();
+        }
+    }
+
+    function verifierPaire() {
+        let carte1 = cartesSelectionnees[0];
+        let carte2 = cartesSelectionnees[1];
+        let valeur1 = cartesData[carte1.index].valeur;
+        let valeur2 = cartesData[carte2.index].valeur;
+
+        if (valeur1 === valeur2) {
+            score += 10;
+            jouerSon('sonMatch');
+            document.getElementById('score').innerText = score;
+            cartesSelectionnees = [];
+            let nonRetournees = cartesData.filter(c => !c.retournee).length;
+            document.getElementById('restantes').innerText = nonRetournees;
+
+            let toutesRetournees = cartesData.every(c => c.retournee === true);
+            if (toutesRetournees) {
+                // Confettis maison
+                for (let i = 0; i < 200; i++) {
+                    let c = document.createElement('div');
+                    c.style.position = 'fixed';
+                    c.style.width = Math.random() * 8 + 4 + 'px';
+                    c.style.height = c.style.width;
+                    c.style.backgroundColor = ['#ffd700', '#ff6b6b', '#4ecdc4', '#ff8c00', '#ff69b4'][Math.floor(Math.random() * 5)];
+                    c.style.borderRadius = '50%';
+                    c.style.left = Math.random() * 100 + '%';
+                    c.style.top = '-10px';
+                    c.style.pointerEvents = 'none';
+                    c.style.zIndex = '9999';
+                    document.body.appendChild(c);
+
+                    c.animate([
+                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(${Math.random() * 500 + 300}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                    ], {
+                        duration: Math.random() * 2000 + 1000,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    }).onfinish = () => c.remove();
+                }
+
+                clearInterval(timerInterval);
+                partieTerminee = true;
+                let btnSauvegarde = document.querySelector('button[onclick="sauvegarderPartie()"]');
+                if (btnSauvegarde) {
+                    btnSauvegarde.disabled = true;
+                    btnSauvegarde.style.opacity = '0.5';
+                }
+                if (currentPartieId) {
+                    fetch('/supprimer-partie', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: currentPartieId })
+                    });
+                }
+                jouerSon('sonWin');
+                setTimeout(() => {
+                    alert('🎉 Félicitations ! Tu as gagné !\nScore final : ' + score);
+                }, 200);
+            }
+        } else {
+            blocage = true;
+            setTimeout(() => {
+                carte1.element.innerHTML = '❓';
+                carte1.element.classList.remove('retournee');
+                carte2.element.innerHTML = '❓';
+                carte2.element.classList.remove('retournee');
+                cartesData[carte1.index].retournee = false;
+                cartesData[carte2.index].retournee = false;
+                cartesSelectionnees = [];
+                blocage = false;
+            }, 800);
+        }
+    }
+
+    function sauvegarderPartie() {
+        if (partieTerminee) {
+            alert('La partie est terminée ! Tu as déjà gagné.');
+            return;
+        }
+
+        let nomJoueur = document.getElementById('nomJoueur').value;
+        if (!nomJoueur) {
+            alert('Entre ton nom avant de sauvegarder !');
+            return;
+        }
+
+        let cartesEtat = [];
+        document.querySelectorAll('.carte').forEach(c => {
+            cartesEtat.push({
+                valeur: c.getAttribute('data-valeur'),
+                retournee: c.classList.contains('retournee')
+            });
+        });
+
+        let data = {
+            id: currentPartieId,
+            nomJoueur: nomJoueur,
+            niveau: niveau,
+            score: score,
+            coups: coups,
+            cartes: cartesEtat
+        };
+
+        fetch('/sauvegarder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.id) {
+                    currentPartieId = data.id;
+                    alert('Partie sauvegardée ! ID: ' + data.id);
+                } else if (data.erreur) {
+                    alert('Erreur: ' + data.erreur);
+                }
+            });
+    }
+    let temps = 0;
+    let timerInterval;
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            if (!partieTerminee) {
+                temps++;
+                document.getElementById('timer').innerText = temps;
+            }
+        }, 1000);
+    }
+    startTimer();
+
+    // Initialiser la grille
+    afficherGrille();
+    // Effet de particules flottantes
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDuration = Math.random() * 3 + 2 + 's';
+        particle.style.width = Math.random() * 6 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+            particle.remove();
+        }, 5000);
+    }
+
+    // Créer des particules toutes les 0.5 secondes
+    setInterval(createParticle, 500);
+    function jouerSon(id) {
+        let son = document.getElementById(id);
+        if (son) {
+            son.currentTime = 0;
+            son.play().catch(e => console.log("Son bloqué par navigateur"));
+        }
+    }
+</script>
+
+</body>
+</html>

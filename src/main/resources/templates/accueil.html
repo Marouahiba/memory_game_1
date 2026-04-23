@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <title>Memory Challenge - Accueil</title>
+    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+</head>
+<body>
+<h1>🧠 Memory Challenge</h1>
+<div id="connexionDiv">
+    <h2>👤 Connexion</h2>
+    <label>Ton pseudo :
+        <input type="text" id="pseudo" placeholder="Entre ton pseudo" style="padding:10px; border-radius:10px;">
+    </label>
+    <button onclick="seConnecter()">✅ Se connecter</button>
+</div>
+
+<div id="menuJeu" style="display:none;">
+    <h2>Bienvenue, <span id="pseudoAffichage"></span> ! 🎉</h2>
+    <p>Prêt à tester ta mémoire ? Bonne chance !</p>
+
+    <h3>Choisis ton niveau :</h3>
+    <br><br/>
+    <button onclick="demarrerPartie(1)">⭐ Facile</button><br>
+    <button onclick="demarrerPartie(2)">⭐⭐ Moyen</button><br>
+    <button onclick="demarrerPartie(3)">⭐⭐⭐ Difficile</button>
+
+    <br><br>
+    <button onclick="chargerPartieJoueur()">📂 Charger mes parties</button>
+    <button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
+    <button onclick="seDeconnecter()">🚪 Se déconnecter</button>
+</div>
+
+<script>
+    function seConnecter() {
+        let pseudo = document.getElementById('pseudo').value.trim();
+        if (!pseudo) {
+            alert('Entre ton pseudo !');
+            return;
+        }
+
+        fetch('/connexion', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pseudo: pseudo })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pseudoAffichage').innerText = pseudo;
+                    document.getElementById('connexionDiv').style.display = 'none';
+                    document.getElementById('menuJeu').style.display = 'block';
+                }
+            });
+    }
+
+    function seDeconnecter() {
+        window.location.href = '/deconnexion';
+    }
+
+    function demarrerPartie(niveau) {
+        window.location.href = '/nouvelle-partie?niveau=' + niveau;
+    }
+
+    function chargerPartieJoueur() {
+        window.location.href = '/charger-partie';
+    }
+
+    // Vérifier si déjà connecté
+    fetch('/verifier-session')
+        .then(response => response.json())
+        .then(data => {
+            if (data.connecte) {
+                document.getElementById('pseudo').value = data.joueur;
+                document.getElementById('pseudoAffichage').innerText = data.joueur;
+                document.getElementById('connexionDiv').style.display = 'none';
+                document.getElementById('menuJeu').style.display = 'block';
+            }
+        });
+    // Effet de particules flottantes
+    function createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDuration = Math.random() * 3 + 2 + 's';
+        particle.style.width = Math.random() * 6 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        document.body.appendChild(particle);
+
+        setTimeout(() => {
+            particle.remove();
+        }, 5000);
+    }
+
+    // Créer des particules toutes les 0.5 secondes
+    setInterval(createParticle, 500);
+</script>
+
+</body>
+</html>

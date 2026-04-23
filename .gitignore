@@ -1,0 +1,19 @@
+# Compiled files
+*.class
+target/
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.mvn/
+mvnw
+mvnw.cmd
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

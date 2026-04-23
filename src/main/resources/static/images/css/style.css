@@ -1,0 +1,393 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: white;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Animation de fond flottant */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 50%, rgba(255,255,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Particules flottantes */
+.particle {
+    position: fixed;
+    bottom: 0;
+    width: 4px;
+    height: 4px;
+    background: rgba(255,215,0,0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+h1 {
+    font-size: 56px;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #ffd700, #ff6b6b, #4ecdc4);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: gradientShift 5s ease infinite;
+    text-shadow: none;
+    letter-spacing: 3px;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+h2, h3 {
+    margin: 20px 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+    display: inline-block;
+}
+
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #ffd700, #ff6b6b);
+    border-radius: 3px;
+    animation: underlinePulse 2s ease-in-out infinite;
+}
+
+@keyframes underlinePulse {
+    0%, 100% { width: 60px; opacity: 1; }
+    50% { width: 100px; opacity: 0.7; }
+}
+
+/* Style de la connexion */
+.connexion, .info {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 30px;
+    padding: 25px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.connexion:hover, .info:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    border-color: rgba(255,215,0,0.3);
+}
+
+input {
+    padding: 12px 24px;
+    border-radius: 50px;
+    border: none;
+    font-size: 16px;
+    margin: 10px;
+    width: 220px;
+    text-align: center;
+    background: rgba(255,255,255,0.9);
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+button {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    color: #1a1a2e;
+    border: none;
+    padding: 12px 32px;
+    margin: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+button:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+}
+
+button:active {
+    transform: translateY(0) scale(0.98);
+}
+
+button:disabled {
+    opacity: 0.5;
+    transform: none;
+    cursor: not-allowed;
+    background: linear-gradient(135deg, #666, #444);
+}
+
+/* Grille du jeu */
+.grille {
+    display: grid;
+    gap: 15px;
+    justify-content: center;
+    margin: 30px auto;
+    padding: 20px;
+    max-width: 90%;
+    background: rgba(255,255,255,0.05);
+    border-radius: 40px;
+    backdrop-filter: blur(5px);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style des cartes */
+.carte {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    font-size: 50px;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.carte::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: linear-gradient(145deg, #3a3a5a, #222242);
+    border-radius: 18px;
+    z-index: -1;
+    transition: opacity 0.3s;
+}
+
+.carte:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+}
+
+.carte:active {
+    transform: scale(0.96);
+}
+
+.carte.retournee {
+    background: linear-gradient(145deg, #ffd700, #ffb347);
+    animation: cardFlip 0.4s ease-out;
+}
+
+@keyframes cardFlip {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(0deg); }
+}
+
+.carte.retournee::before {
+    background: linear-gradient(145deg, #ffe066, #ffc04c);
+}
+
+.carte img {
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    object-fit: cover;
+    animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Animation de victoire */
+@keyframes victoryPulse {
+    0% { transform: scale(1); text-shadow: 0 0 0 gold; }
+    50% { transform: scale(1.05); text-shadow: 0 0 20px gold; }
+    100% { transform: scale(1); text-shadow: 0 0 0 gold; }
+}
+
+.victory-animation {
+    animation: victoryPulse 0.5s ease-in-out 3;
+}
+
+/* Tableau des parties */
+table {
+    margin: 20px auto;
+    border-collapse: collapse;
+    width: 90%;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+th, td {
+    padding: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+    transition: all 0.3s;
+}
+
+th {
+    background: rgba(255,215,0,0.2);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+tr {
+    transition: all 0.3s;
+}
+
+tr:hover {
+    background: rgba(255,215,0,0.1);
+    transform: scale(1.01);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    background: rgba(255,215,0,0.2);
+    border-radius: 20px;
+    padding: 5px 15px;
+    margin: 5px;
+    font-size: 14px;
+    backdrop-filter: blur(5px);
+}
+
+/* Timer et score */
+.info span {
+    font-weight: bold;
+    color: #ffd700;
+    font-size: 24px;
+    margin: 0 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .carte {
+        width: 70px;
+        height: 70px;
+        font-size: 30px;
+    }
+
+    .carte img {
+        width: 50px;
+        height: 50px;
+    }
+
+    h1 {
+        font-size: 36px;
+    }
+
+    button {
+        padding: 8px 20px;
+        font-size: 14px;
+    }
+
+    .info span {
+        font-size: 18px;
+    }
+}
+
+/* Scrollbar personnalisée */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a2e;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #ffd700, #ff8c00);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ffd700;
+}
