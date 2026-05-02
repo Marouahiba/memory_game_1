@@ -4,6 +4,8 @@ target/
 
 # IDE files
 .idea/
+.vscode/
+.smarttomcat/
 *.iml
 *.iws
 *.ipr
@@ -13,7 +15,12 @@ mvnw.cmd
 
 # Logs
 *.log
+hs_err_pid*.log
+replay_pid*.log
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# Nested local copy
+memory-game/

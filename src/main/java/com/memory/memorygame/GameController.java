@@ -1,19 +1,23 @@
 package com.memory.memorygame;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import java.util.*;
+
 import java.time.LocalDateTime;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class GameController {
@@ -42,12 +46,20 @@ public class GameController {
 
         Long joueurId = (Long) session.getAttribute("joueurId");
         Joueur joueur = joueurRepository.findById(joueurId).orElse(null);
-        if (joueur == null) return "redirect:/";
+        if (joueur == null) {
+            return "redirect:/";
+        }
 
         model.addAttribute("niveau", niveau);
         model.addAttribute("joueur", joueur.getPseudo());
         model.addAttribute("cartes", memoryService.getCartes(niveau));
         return "jeu";
+    }
+
+    @GetMapping("/test")
+    @ResponseBody
+    public String test() {
+        return "ok";
     }
 
     @GetMapping("/charger-partie")
@@ -58,7 +70,9 @@ public class GameController {
 
         Long joueurId = (Long) session.getAttribute("joueurId");
         Joueur joueur = joueurRepository.findById(joueurId).orElse(null);
-        if (joueur == null) return "redirect:/";
+        if (joueur == null) {
+            return "redirect:/";
+        }
 
         List<Partie> partiesJoueur = partieRepository.findByJoueur(joueur);
         model.addAttribute("parties", partiesJoueur);
@@ -67,9 +81,14 @@ public class GameController {
     }
 
     @GetMapping("/reprendre-partie")
-    public String reprendrePartie(@RequestParam Long id, Model model) {
+    public String reprendrePartie(@RequestParam Long id, HttpSession session, Model model) {
+        if (!estConnecte(session)) {
+            return "redirect:/";
+        }
+
         Partie partie = partieRepository.findById(id).orElse(null);
-        if (partie == null) {
+        Long joueurId = (Long) session.getAttribute("joueurId");
+        if (partie == null || !partie.getJoueur().getId().equals(joueurId)) {
             return "redirect:/charger-partie";
         }
 
@@ -89,50 +108,25 @@ public class GameController {
         try {
             Long joueurId = (Long) session.getAttribute("joueurId");
             if (joueurId == null) {
-                result.put("erreur", "Non connecté");
+                result.put("erreur", "Non connecte");
                 return result;
             }
 
             Joueur joueur = joueurRepository.findById(joueurId).orElse(null);
             if (joueur == null) {
-                result.put("erreur", "Joueur non trouvé");
+                result.put("erreur", "Joueur non trouve");
                 return result;
             }
 
-            Partie partie;
-
-            if (data.containsKey("id") && data.get("id") != null) {
-                Long id = ((Number) data.get("id")).longValue();
-                partie = partieRepository.findById(id).orElse(null);
-                if (partie == null) {
-                    partie = new Partie();
-                }
-            } else {
-                partie = new Partie();
+            Partie partie = chargerOuCreerPartie(data.get("id"), joueurId, result);
+            if (partie == null) {
+                return result;
             }
 
             partie.setJoueur(joueur);
-
-            Object niveau = data.get("niveau");
-            if (niveau instanceof Integer) {
-                partie.setNiveau((Integer) niveau);
-            } else if (niveau instanceof String) {
-                partie.setNiveau(Integer.parseInt((String) niveau));
-            }
-
-            Object score = data.get("score");
-            if (score instanceof Integer) {
-                partie.setScore((Integer) score);
-            } else if (score instanceof String) {
-                partie.setScore(Integer.parseInt((String) score));
-            }
-
-            Object coups = data.get("coups");
-            if (coups instanceof Integer) {
-                partie.setCoups((Integer) coups);
-            } else if (coups instanceof String) {
-                partie.setCoups(Integer.parseInt((String) coups));
-            }
+            partie.setNiveau(lireEntier(data.get("niveau")));
+            partie.setScore(lireEntier(data.get("score")));
+            partie.setCoups(lireEntier(data.get("coups")));
 
             ObjectMapper mapper = new ObjectMapper();
             partie.setCartes(mapper.writeValueAsString(data.get("cartes")));
@@ -148,11 +142,27 @@ public class GameController {
 
     @DeleteMapping("/supprimer-partie")
     @ResponseBody
-    public Map<String, Object> supprimerPartie(@RequestBody Map<String, Object> data) {
+    public Map<String, Object> supprimerPartie(@RequestBody Map<String, Object> data, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         try {
+            Long joueurId = (Long) session.getAttribute("joueurId");
+            if (joueurId == null) {
+                result.put("erreur", "Non connecte");
+                return result;
+            }
+
             Long id = ((Number) data.get("id")).longValue();
-            partieRepository.deleteById(id);
+            Partie partie = partieRepository.findById(id).orElse(null);
+            if (partie == null) {
+                result.put("erreur", "Partie introuvable");
+                return result;
+            }
+            if (!partie.getJoueur().getId().equals(joueurId)) {
+                result.put("erreur", "Suppression non autorisee");
+                return result;
+            }
+
+            partieRepository.delete(partie);
             result.put("success", true);
         } catch (Exception e) {
             result.put("erreur", e.getMessage());
@@ -160,26 +170,28 @@ public class GameController {
         return result;
     }
 
-    private boolean estConnecte(HttpSession session) {
-        return session.getAttribute("joueurId") != null;
-    }
-
     @PostMapping("/connexion")
     @ResponseBody
     public Map<String, Object> connexion(@RequestBody Map<String, Object> data, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        String pseudo = (String) data.get("pseudo");
-        String motDePasse = (String) data.get("motDePasse");
+        try {
+            String pseudo = (String) data.get("pseudo");
+            String motDePasse = (String) data.get("motDePasse");
 
-        Optional<Joueur> joueurOpt = joueurRepository.findByPseudo(pseudo);
+            Optional<Joueur> joueurOpt = joueurRepository.findByPseudo(pseudo);
 
-        if (joueurOpt.isPresent() && passwordEncoder.matches(motDePasse, joueurOpt.get().getMotDePasse())) {
-            session.setAttribute("joueurId", joueurOpt.get().getId());
-            session.setAttribute("joueurPseudo", joueurOpt.get().getPseudo());
-            result.put("success", true);
-        } else {
+            if (joueurOpt.isPresent() && passwordEncoder.matches(motDePasse, joueurOpt.get().getMotDePasse())) {
+                session.setAttribute("joueurId", joueurOpt.get().getId());
+                session.setAttribute("joueurPseudo", joueurOpt.get().getPseudo());
+                result.put("success", true);
+                return result;
+            }
+
             result.put("success", false);
             result.put("message", "Pseudo ou mot de passe incorrect");
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "Erreur serveur: " + e.getMessage());
         }
         return result;
     }
@@ -188,20 +200,25 @@ public class GameController {
     @ResponseBody
     public Map<String, Object> inscription(@RequestBody Map<String, Object> data) {
         Map<String, Object> result = new HashMap<>();
-        String pseudo = (String) data.get("pseudo");
-        String motDePasse = (String) data.get("motDePasse");
+        try {
+            String pseudo = (String) data.get("pseudo");
+            String motDePasse = (String) data.get("motDePasse");
 
-        if (joueurRepository.findByPseudo(pseudo).isPresent()) {
+            if (joueurRepository.findByPseudo(pseudo).isPresent()) {
+                result.put("success", false);
+                result.put("message", "Ce pseudo existe deja");
+                return result;
+            }
+
+            String motDePasseCrypte = passwordEncoder.encode(motDePasse);
+            Joueur joueur = new Joueur(pseudo, motDePasseCrypte);
+            joueurRepository.save(joueur);
+
+            result.put("success", true);
+        } catch (Exception e) {
             result.put("success", false);
-            result.put("message", "Ce pseudo existe déjà");
-            return result;
+            result.put("message", "Erreur serveur: " + e.getMessage());
         }
-
-        String motDePasseCrypte = passwordEncoder.encode(motDePasse);
-        Joueur joueur = new Joueur(pseudo, motDePasseCrypte);
-        joueurRepository.save(joueur);
-
-        result.put("success", true);
         return result;
     }
 
@@ -228,5 +245,36 @@ public class GameController {
     @GetMapping("/commentjouer")
     public String commentJouer() {
         return "commentjouer";
+    }
+
+    private boolean estConnecte(HttpSession session) {
+        return session.getAttribute("joueurId") != null;
+    }
+
+    private Partie chargerOuCreerPartie(Object rawId, Long joueurId, Map<String, Object> result) {
+        if (rawId == null) {
+            return new Partie();
+        }
+
+        Long id = ((Number) rawId).longValue();
+        Partie partie = partieRepository.findById(id).orElse(null);
+        if (partie == null) {
+            return new Partie();
+        }
+        if (!partie.getJoueur().getId().equals(joueurId)) {
+            result.put("erreur", "Cette partie n'appartient pas au joueur connecte");
+            return null;
+        }
+        return partie;
+    }
+
+    private int lireEntier(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String text) {
+            return Integer.parseInt(text);
+        }
+        return 0;
     }
 }

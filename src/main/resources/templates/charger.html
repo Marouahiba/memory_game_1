@@ -4,7 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Charger une partie</title>
-    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         table { margin: auto; border-collapse: collapse; width: 80%; }
         th, td { padding: 10px; border: 1px solid white; text-align: center; }
@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-<h1>📂 Charger une partie sauvegardée</h1>
+<h1>Charger une partie sauvegardee</h1>
 <h2>Parties de <span th:text="${joueur}"></span></h2>
 <table>
     <thead>
@@ -29,29 +29,36 @@
     <tr th:each="p : ${parties}">
         <td th:text="${p.joueur.pseudo}">Joueur</td>
         <td>
-            <span th:if="${p.niveau == 1}">⭐ Facile</span>
-            <span th:if="${p.niveau == 2}">⭐⭐ Moyen</span>
-            <span th:if="${p.niveau == 3}">⭐⭐⭐ Difficile</span>
+            <span th:if="${p.niveau == 1}">Facile</span>
+            <span th:if="${p.niveau == 2}">Moyen</span>
+            <span th:if="${p.niveau == 3}">Difficile</span>
         </td>
         <td th:text="${p.score}">0</td>
         <td th:text="${p.coups}">0</td>
         <td th:text="${#temporals.format(p.dateSauvegarde, 'dd/MM/yyyy HH:mm:ss')}">date</td>
         <td>
-            <button th:onclick="'chargerPartie(' + ${p.id} + ')'">📀 Charger</button>
-            <button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
+            <button th:onclick="|chargerPartie(${p.id})|">Charger</button>
+            <button onclick="window.location.href=appUrl('/commentjouer')">Comment jouer ?</button>
         </td>
     </tr>
     </tbody>
 </table>
 
 <br>
-<button onclick="window.location.href='/'">🏠 Retour accueil</button>
+<button onclick="window.location.href=appUrl('/')">Retour accueil</button>
 
-<script>
-    function chargerPartie(id) {
-        window.location.href = '/reprendre-partie?id=' + id;
+<script th:inline="javascript">
+    const contextPath = /*[[@{/}]]*/ '/';
+
+    function appUrl(path) {
+        const base = contextPath.endsWith('/') ? contextPath.slice(0, -1) : contextPath;
+        return `${base}${path}`;
     }
-    // Effet de particules flottantes
+
+    function chargerPartie(id) {
+        window.location.href = appUrl('/reprendre-partie?id=' + id);
+    }
+
     function createParticle() {
         const particle = document.createElement('div');
         particle.className = 'particle';
@@ -66,7 +73,6 @@
         }, 5000);
     }
 
-    // Créer des particules toutes les 0.5 secondes
     setInterval(createParticle, 500);
 </script>
 

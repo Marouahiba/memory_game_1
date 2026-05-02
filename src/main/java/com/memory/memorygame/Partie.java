@@ -21,6 +21,7 @@ public class Partie {
     @Column(columnDefinition = "LONGTEXT")
     private String cartes;
 
+    @Column(name = "date_sauvegarde")
     private LocalDateTime dateSauvegarde;
 
     // Getters et Setters

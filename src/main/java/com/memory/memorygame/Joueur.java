@@ -16,9 +16,10 @@ public class Joueur {
     @Column(unique = true, nullable = false)
     private String pseudo;
 
-    @Column(nullable = false)
+    @Column(name = "mot_de_passe", nullable = false)
     private String motDePasse;
 
+    @Column(name = "date_inscription")
     private LocalDateTime dateInscription;
 
     @OneToMany(mappedBy = "joueur", cascade = CascadeType.ALL)

@@ -4,7 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Memory Challenge - Reprise partie</title>
-    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .grille {
             display: grid;
@@ -24,6 +24,7 @@
             cursor: pointer;
             transition: transform 0.3s;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: #1a1a2e;
         }
         .carte:hover {
             transform: scale(1.05);
@@ -57,52 +58,48 @@
 
 </head>
 <body>
-<h1>🔄 Reprise de la partie</h1>
-<audio id="sonFlip" src="/images/sounds/flip.mp3" preload="auto"></audio>
-<audio id="sonMatch" src="/images/sounds/match.mp3" preload="auto"></audio>
-<audio id="sonWin" src="/images/sounds/win.mp3" preload="auto"></audio>
+<h1>Reprise de la partie</h1>
+<audio id="sonFlip" th:src="@{/sounds/flip.mp3}" preload="auto"></audio>
+<audio id="sonMatch" th:src="@{/sounds/match.mp3}" preload="auto"></audio>
+<audio id="sonWin" th:src="@{/sounds/win.mp3}" preload="auto"></audio>
 <div class="info">
     <input type="hidden" id="nomJoueur">
-    <button onclick="sauvegarderReprise()">💾 Sauvegarder</button>
-    <button onclick="window.location.href='/commentjouer'">❓ Comment jouer ?</button>
+    <button onclick="sauvegarderReprise()">Sauvegarder</button>
+    <button onclick="window.location.href=appUrl('/commentjouer')">Comment jouer ?</button>
 </div>
 <div class="info">
     Niveau <span id="niveauValue" th:text="${niveau}">1</span>
     | Score: <span id="score">0</span>
     | Coups: <span id="coups">0</span>
-    | ⏱️ Temps: <span id="timer">0</span> s
-    | 🃏 Restantes: <span id="restantes">0</span>
+    | Temps: <span id="timer">0</span> s
+    | Restantes: <span id="restantes">0</span>
 </div>
 
 <div class="grille" id="grille"></div>
 
-<button onclick="window.location.href='/'">🏠 Retour accueil</button>
+<button onclick="window.location.href=appUrl('/')">Retour accueil</button>
 
 <script th:inline="javascript">
-    /*<![CDATA[*/
+    const contextPath = /*[[@{/}]]*/ '/';
     const niveau = [[${niveau}]];
     const partieId = [[${id}]];
     let scoreInitial = [[${score}]];
     let coupsInitial = [[${coups}]];
     let cartesJSON = [[${cartesSauvegardees}]];
-    /*]]>*/
 
-    console.log("Niveau:", niveau);
-    console.log("Partie ID:", partieId);
-    console.log("Score initial:", scoreInitial);
-    console.log("Coups initial:", coupsInitial);
-
-    // Parser les données des cartes
-    let cartesData;
-    if (typeof cartesJSON === 'string') {
-        cartesData = JSON.parse(cartesJSON);
-    } else {
-        cartesData = cartesJSON;
+    function appUrl(path) {
+        const base = contextPath.endsWith('/') ? contextPath.slice(0, -1) : contextPath;
+        return `${base}${path}`;
     }
 
-    console.log("Cartes data chargées:", cartesData);
+    function assetUrl(path) {
+        if (!path || path.startsWith('http') || path.startsWith(contextPath)) {
+            return path;
+        }
+        return path.startsWith('/') ? appUrl(path) : appUrl('/' + path);
+    }
 
-    // Variables du jeu
+    let cartesData = typeof cartesJSON === 'string' ? JSON.parse(cartesJSON) : cartesJSON;
     let score = scoreInitial;
     let coups = coupsInitial;
     let temps = 0;
@@ -111,20 +108,27 @@
     let blocage = false;
     let partieTerminee = false;
 
-    // Mettre à jour l'affichage initial
     document.getElementById('score').innerText = score;
     document.getElementById('coups').innerText = coups;
     document.getElementById('timer').innerText = temps;
-    
 
-    // Fonctions
+    let colonnes = 4;
+    if (niveau === 3) {
+        colonnes = 6;
+    }
+
+    const grilleDiv = document.getElementById('grille');
+    grilleDiv.style.gridTemplateColumns = `repeat(${colonnes}, 100px)`;
+
     function updateRestantes() {
         let nonRetournees = cartesData.filter(c => !c.retournee).length;
         document.getElementById('restantes').innerText = nonRetournees;
     }
 
     function startTimer() {
-        if (timerInterval) clearInterval(timerInterval);
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
         timerInterval = setInterval(() => {
             if (!partieTerminee) {
                 temps++;
@@ -132,13 +136,6 @@
             }
         }, 1000);
     }
-
-    // Déterminer le nombre de colonnes
-    let colonnes = 4;
-    if (niveau === 3) colonnes = 6;
-
-    const grilleDiv = document.getElementById('grille');
-    grilleDiv.style.gridTemplateColumns = `repeat(${colonnes}, 100px)`;
 
     function afficherGrille() {
         grilleDiv.innerHTML = '';
@@ -148,15 +145,14 @@
             div.className = 'carte';
             if (carte.retournee === true) {
                 const img = document.createElement('img');
-                img.src = carte.valeur;
+                img.src = assetUrl(carte.valeur);
                 div.appendChild(img);
                 div.classList.add('retournee');
             } else {
-                div.innerHTML = '❓';
+                div.innerHTML = '?';
             }
             div.setAttribute('data-index', index);
             div.setAttribute('data-valeur', carte.valeur);
-            div.setAttribute('data-retournee', carte.retournee);
             div.onclick = () => returnCarte(div);
             grilleDiv.appendChild(div);
         });
@@ -167,20 +163,19 @@
 
     function returnCarte(element) {
         jouerSon('sonFlip');
-        if (blocage) return;
-        if (partieTerminee) return;
-        if (element.classList.contains('retournee')) return;
-        if (cartesSelectionnees.length >= 2) return;
+        if (blocage || partieTerminee || element.classList.contains('retournee') || cartesSelectionnees.length >= 2) {
+            return;
+        }
 
         let index = parseInt(element.getAttribute('data-index'));
-        if (cartesData[index].retournee === true) return;
+        if (cartesData[index].retournee === true) {
+            return;
+        }
 
         let valeur = cartesData[index].valeur;
-
-        // Afficher l'image
         element.innerHTML = '';
         const img = document.createElement('img');
-        img.src = valeur;
+        img.src = assetUrl(valeur);
         element.appendChild(img);
         element.classList.add('retournee');
         cartesData[index].retournee = true;
@@ -211,7 +206,6 @@
 
             let toutesRetournees = cartesData.every(c => c.retournee === true);
             if (toutesRetournees) {
-                // Confettis maison
                 for (let i = 0; i < 200; i++) {
                     let c = document.createElement('div');
                     c.style.position = 'fixed';
@@ -245,7 +239,7 @@
                 }
 
                 if (partieId) {
-                    fetch('/supprimer-partie', {
+                    fetch(appUrl('/supprimer-partie'), {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: partieId })
@@ -255,15 +249,15 @@
                 jouerSon('sonWin');
 
                 setTimeout(() => {
-                    alert('🎉 Félicitations ! Tu as gagné !\nScore final : ' + score);
+                    alert('Felicitations ! Tu as gagne !\nScore final : ' + score);
                 }, 200);
             }
         } else {
             blocage = true;
             setTimeout(() => {
-                carte1.element.innerHTML = '❓';
+                carte1.element.innerHTML = '?';
                 carte1.element.classList.remove('retournee');
-                carte2.element.innerHTML = '❓';
+                carte2.element.innerHTML = '?';
                 carte2.element.classList.remove('retournee');
                 cartesData[carte1.index].retournee = false;
                 cartesData[carte2.index].retournee = false;
@@ -276,7 +270,7 @@
 
     function sauvegarderReprise() {
         if (partieTerminee) {
-            alert('La partie est terminée ! Tu as déjà gagné.');
+            alert('La partie est terminee !');
             return;
         }
 
@@ -296,7 +290,7 @@
             cartes: cartesEtat
         };
 
-        fetch('/sauvegarder', {
+        fetch(appUrl('/sauvegarder'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -304,16 +298,15 @@
             .then(response => response.json())
             .then(data => {
                 if (data.id) {
-                    alert('Partie mise à jour ! ID: ' + data.id);
+                    alert('Partie mise a jour ! ID: ' + data.id);
+                } else if (data.erreur) {
+                    alert('Erreur: ' + data.erreur);
                 } else {
                     alert('Erreur lors de la sauvegarde');
                 }
             });
     }
 
-    // Démarrer l'affichage
-    afficherGrille();
-    // Effet de particules flottantes
     function createParticle() {
         const particle = document.createElement('div');
         particle.className = 'particle';
@@ -328,15 +321,16 @@
         }, 5000);
     }
 
-    // Créer des particules toutes les 0.5 secondes
-    setInterval(createParticle, 500);
     function jouerSon(id) {
         let son = document.getElementById(id);
         if (son) {
             son.currentTime = 0;
-            son.play().catch(e => console.log("Son bloqué par navigateur"));
+            son.play().catch(() => console.log('Lecture audio bloquee par le navigateur'));
         }
     }
+
+    afficherGrille();
+    setInterval(createParticle, 500);
 </script>
 
 </body>

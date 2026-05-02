@@ -4,7 +4,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Memory Challenge - Comment jouer</title>
-    <link rel="stylesheet" th:href="@{/images/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .regles {
             text-align: left;
@@ -39,51 +39,51 @@
             justify-content: center;
             font-size: 40px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: #1a1a2e;
         }
     </style>
 </head>
 <body>
-<h1>📖 Comment jouer ?</h1>
+<h1>Comment jouer ?</h1>
 
 <div class="regles">
-    <h2>🎯 Objectif du jeu</h2>
-    <p>Trouver toutes les paires de cartes identiques en un minimum de coups !</p>
+    <h2>Objectif du jeu</h2>
+    <p>Trouver toutes les paires de cartes identiques en un minimum de coups.</p>
 
-    <h3>🎮 Règles :</h3>
+    <h3>Regles :</h3>
     <ul>
-        <li>🔹 Clique sur une carte pour la retourner</li>
-        <li>🔹 Retourne deux cartes à la fois</li>
-        <li>🔹 Si les deux cartes sont identiques → elles restent visibles (+10 points)</li>
-        <li>🔹 Si elles sont différentes → elles se retournent automatiquement</li>
-        <li>🔹 Le jeu continue jusqu'à ce que toutes les paires soient trouvées</li>
+        <li>Clique sur une carte pour la retourner.</li>
+        <li>Retourne deux cartes a la fois.</li>
+        <li>Si les deux cartes sont identiques, elles restent visibles et tu gagnes 10 points.</li>
+        <li>Si elles sont differentes, elles se retournent automatiquement.</li>
+        <li>Le jeu continue jusqu'a ce que toutes les paires soient trouvees.</li>
     </ul>
 
-    <h3>⭐ Niveaux :</h3>
+    <h3>Niveaux :</h3>
     <ul>
-        <li>🌟 Facile : 6 paires (12 cartes)</li>
-        <li>🌟🌟 Moyen : 8 paires (16 cartes)</li>
-        <li>🌟🌟🌟 Difficile : 12 paires (24 cartes)</li>
+        <li>Facile : 6 paires (12 cartes)</li>
+        <li>Moyen : 8 paires (16 cartes)</li>
+        <li>Difficile : 12 paires (24 cartes)</li>
     </ul>
 
-    <h3>💾 Sauvegarde :</h3>
+    <h3>Sauvegarde :</h3>
     <ul>
-        <li>Tu peux sauvegarder ta partie à tout moment</li>
-        <li>Retrouve tes parties dans "Charger mes parties"</li>
-        <li>Chaque joueur a ses propres parties</li>
+        <li>Tu peux sauvegarder ta partie a tout moment.</li>
+        <li>Retrouve tes parties dans "Charger mes parties".</li>
+        <li>Chaque joueur a ses propres parties.</li>
     </ul>
 
     <div class="exemple">
-        <div class="exemple-carte">❓</div>
-        <div class="exemple-carte" style="background:#ffd700;">🍎</div>
-        <div class="exemple-carte">❓</div>
+        <div class="exemple-carte">?</div>
+        <div class="exemple-carte" style="background:#ffd700;">A</div>
+        <div class="exemple-carte">?</div>
     </div>
-    <p style="text-align:center;">❓ = carte cachée &nbsp;&nbsp; 🍎 = carte retournée</p>
+    <p style="text-align:center;">? = carte cachee, A = carte retournee</p>
 </div>
 
 <br>
 <br>
-<button onclick="window.history.back()">🔙 Retour</button>
+<button onclick="window.history.back()">Retour</button>
 
 </body>
-
 </html>
